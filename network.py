@@ -6,47 +6,45 @@ from gekko import GEKKO
 from scipy.sparse import coo_matrix, eye, hstack
 
 
+# network = pd.ExcelFile(path)
+
 class Network:
 
-    def __init__(self, path, disp=False):
+    def __init__(self, data, disp=False):
         """
-        In the initialization, the path of the xlsx file that contains the network
-        data is loaded, the information is extracted from this same file, the
-        incidence matrix is built, which describes the topology of the system and
-        finally the upper and lower limits are established in each element of the
-        system.
+        In the initialization,  the xlsx file that contains the network data is
+        loaded, the information is extracted from this same file, the incidence
+        matrix is built, which describes the topology of the system and finally the
+        upper and lower limits are established in each element of the system.
         """
-        self.path = path
+        self.data = data
         self.disp = disp
-        path = self.path
-
         # The information is extracted from the xlsx file
-        self.node_info = pd.read_excel(path, sheet_name='node.info')
+        self.node_info = pd.read_excel(self.data, sheet_name='node.info')
         self.node_info['node_id'] = self.node_info['node_id'].astype('int')
         self.node_info['type'] = self.node_info['type'].astype('int')
 
-        self.node_dem = pd.read_excel(path, sheet_name='node.dem')
+        self.node_dem = pd.read_excel(self.data, sheet_name='node.dem')
         self.node_dem['Total'] = self.node_dem.sum(axis=1)
         self.node_user = self.node_dem[self.node_dem['Total'] != 0]
 
-        self.node_demcost = pd.read_excel(path, sheet_name='node.demcost')
+        self.node_demcost = pd.read_excel(self.data, sheet_name='node.demcost')
 
-        self.well = pd.read_excel(path, sheet_name='well')
+        self.well = pd.read_excel(self.data, sheet_name='well')
         self.well['node'] = self.well['node'].astype('int')
 
-        self.pipe = pd.read_excel(path, sheet_name='pipe')
+        self.pipe = pd.read_excel(self.data, sheet_name='pipe')
         self.pipe['fnode'] = self.pipe['fnode'].astype('int')
         self.pipe['tnode'] = self.pipe['tnode'].astype('int')
 
-        self.comp = pd.read_excel(path, sheet_name='comp')
+        self.comp = pd.read_excel(self.data, sheet_name='comp')
         self.comp['fnode'] = self.comp['fnode'].astype('int')
         self.comp['tnode'] = self.comp['tnode'].astype('int')
         self.comp['Type'] = self.comp['Type'].astype('int')
 
-        self.sto = pd.read_excel(path, sheet_name='sto')
+        self.sto = pd.read_excel(self.data, sheet_name='sto')
         self.sto['node'] = self.sto['node'].astype('int')
-
-        self.coordinates = pd.read_excel(path, sheet_name='coordinates')
+        self.coordinates = pd.read_excel(self.data, sheet_name='coordinates')
 
         self.max_ratio = self.comp['ratio']
         self.N = len(self.node_info)
@@ -58,32 +56,29 @@ class Network:
         N = len(self.node_info)
         # Incidence Matrix is created
         # Wells ok
-        df_wells = pd.read_excel(path, sheet_name='well')
+        df_wells = pd.read_excel(self.data, sheet_name='well')
         W = len(self.well)
         wells = coo_matrix((np.ones(W, ), (self.well['node'] - 1, np.arange(W))), shape=(N, W))
-
         # Pipes ok
-        df_pipes = pd.read_excel(path, sheet_name='pipe')
+        df_pipes = pd.read_excel(self.data, sheet_name='pipe')
 
         P = len(self.pipe)
         data = np.concatenate((-1.0 * np.ones(P), np.ones(P)))
         row = pd.concat((self.pipe['fnode'] - 1, self.pipe['tnode'] - 1))
         col = np.concatenate(2 * [np.arange(P)])
+
         pipes = hstack(2 * [coo_matrix((data, (row, col)), shape=(N, P))]).toarray()
         # print('Pipes:', pipes.shape)
-
         # Compressors ok
         C = len(self.comp)
         data = np.concatenate((-1.0 * np.ones(C), np.ones(C)))
         row = pd.concat((self.comp['fnode'] - 1, self.comp['tnode'] - 1))
         col = np.concatenate(2 * [np.arange(C)])
         comps = coo_matrix((data, (row, col)), shape=(N, C))
-
         # Users ok
         users = hstack(len(self.node_demcost.T) * [eye(N)])
-
         # Storage
-        self.sto = pd.read_excel(self.path, sheet_name='sto')
+        self.sto = pd.read_excel(self.data, sheet_name='sto')
         S = len(self.sto)
         sto = coo_matrix((np.ones(S, ), (self.sto['node'] - 1, np.arange(S))), shape=(N, S))
         sto = hstack([sto, -1.0 * sto])
@@ -289,31 +284,7 @@ class Network:
         self.m.open_folder()
         self.m.solve(disp=self.disp)
 
-    def show_values(self):
-
-        print('Objective: ' + str(self.m.options.objfcnval))
-        for i in range(len(self.well)):
-            inj = self.well['node'].values[i]
-            print('Inj', inj, ':', self.X[i].value[0])
-
-        print('\n')
-        f_plus = self.X[self.W: self.W + self.P]
-        f_minus = self.X[self.W + self.P: self.W + self.P + self.P]
-        for i in range(self.P):
-            From = self.pipe['fnode'][i]
-            To = self.pipe['tnode'][i]
-            print('Net flow', From, To, ':', round(f_plus[i][0] + f_minus[i][0], 3))
-
-        print('\n')
-        for i in range(len(self.comp)):
-            From = self.comp['fnode'][i]
-            To = self.comp['tnode'][i]
-            print('comp', From, To, ':', self.X[len(self.well) + 2 * len(self.pipe) + i].value[0])
-
-        print('\n')
-        print('Objective: ' + str(self.m.options.objfcnval))
-
-    def show_network(self, flow_max=None):
+    def show_network(self, flow_max=None, width=15, height=10, dpi=100):
         nodes_ = np.arange(1, len(self.node_info) + 1)
         edges_pipe = self.pipe[['fnode', 'tnode']].values
         edges_comp = self.comp[['fnode', 'tnode']].values
@@ -361,7 +332,7 @@ class Network:
                    'pos': pos
                    }
 
-        fig = plt.figure(dpi=250)
+        fig = plt.figure(figsize=(width, height), dpi=dpi)
         # nx.draw_networkx(G, )
         nx.draw(G, **options)
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=fmin, vmax=fmax))
@@ -369,9 +340,43 @@ class Network:
         cbar = plt.colorbar(sm)
         plt.show()
 
+    def get_values(self):
+        N = self.W + self.P + self.C
+        names = [0] * N
+        values = [0] * N
+
+        for i in range(self.W):
+            inj = self.well['node'].values[i]
+            names[i] = 'Well ' + str(inj)
+            values[i] = self.X[i].value[0]
+
+        f_plus = self.X[self.W: self.W + self.P]
+        f_minus = self.X[self.W + self.P: self.W + self.P + self.P]
+        for i in range(self.P):
+            ind = self.W + i
+            From = self.pipe['fnode'][i]
+            To = self.pipe['tnode'][i]
+            names[ind] = 'Net flow pipe ' + str(From) + '-' + str(To)
+            values[ind] = round(f_plus[i][0] + f_minus[i][0], 3)
+
+        for i in range(self.C):
+            ind = self.W + self.P + i
+            From = self.comp['fnode'][i]
+            To = self.comp['tnode'][i]
+            names[ind] = 'Flow compressor ' + str(From) + '-' + str(To)
+            values[ind] = round(self.X[self.W + 2 * self.P + i].value[0], 3)
+
+        names.insert(0, 'Objective')
+        values.insert(0, self.m.options.objfcnval)
+        return dict(zip(names, values))
+
 
 if __name__ == "__main__":
+
     path = '/home/cristian/workspace/PycharmProjects/natural_gas/estructura_red_2022_base.xlsx'
-    p = Network(path, disp=True)
-    p.show_values()
+
+    data = pd.ExcelFile(path)
+    # path = '/content/drive/Shareddrives/Proyecto Gas Natural 2022/Cristian/python/db/ng_case58.xlsx'
+    p = Network(data, disp=True)
+    print(p.get_values())
     p.show_network(flow_max=None)
