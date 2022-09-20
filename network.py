@@ -369,14 +369,3 @@ class Network:
         names.insert(0, 'Objective')
         values.insert(0, self.m.options.objfcnval)
         return dict(zip(names, values))
-
-
-if __name__ == "__main__":
-
-    path = '/home/cristian/workspace/PycharmProjects/natural_gas/estructura_red_2022_base.xlsx'
-
-    data = pd.ExcelFile(path)
-    # path = '/content/drive/Shareddrives/Proyecto Gas Natural 2022/Cristian/python/db/ng_case58.xlsx'
-    p = Network(data, disp=True)
-    print(p.get_values())
-    p.show_network(flow_max=None)
