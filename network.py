@@ -1,12 +1,12 @@
-import pandas as pd
-import numpy as np
-import networkx as nx
 import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import pandas as pd
 from gekko import GEKKO
 from scipy.sparse import coo_matrix, eye, hstack
 
-
 # network = pd.ExcelFile(path)
+
 
 class Network:
 
@@ -44,8 +44,10 @@ class Network:
 
         self.sto = pd.read_excel(self.data, sheet_name='sto')
         self.sto['node'] = self.sto['node'].astype('int')
-        self.coordinates = pd.read_excel(self.data, sheet_name='coordinates')
-
+        try:
+            self.coordinates = pd.read_excel(self.data, sheet_name='coordinates')
+        except:
+            self.coordinates = False
         self.max_ratio = self.comp['ratio']
         self.N = len(self.node_info)
         self.W = len(self.well)
@@ -58,7 +60,8 @@ class Network:
         # Wells ok
         df_wells = pd.read_excel(self.data, sheet_name='well')
         W = len(self.well)
-        wells = coo_matrix((np.ones(W, ), (self.well['node'] - 1, np.arange(W))), shape=(N, W))
+        wells = coo_matrix(
+            (np.ones(W, ), (self.well['node'] - 1, np.arange(W))), shape=(N, W))
         # Pipes ok
         df_pipes = pd.read_excel(self.data, sheet_name='pipe')
 
@@ -67,7 +70,8 @@ class Network:
         row = pd.concat((self.pipe['fnode'] - 1, self.pipe['tnode'] - 1))
         col = np.concatenate(2 * [np.arange(P)])
 
-        pipes = hstack(2 * [coo_matrix((data, (row, col)), shape=(N, P))]).toarray()
+        pipes = hstack(
+            2 * [coo_matrix((data, (row, col)), shape=(N, P))]).toarray()
         # print('Pipes:', pipes.shape)
         # Compressors ok
         C = len(self.comp)
@@ -80,7 +84,8 @@ class Network:
         # Storage
         self.sto = pd.read_excel(self.data, sheet_name='sto')
         S = len(self.sto)
-        sto = coo_matrix((np.ones(S, ), (self.sto['node'] - 1, np.arange(S))), shape=(N, S))
+        sto = coo_matrix(
+            (np.ones(S, ), (self.sto['node'] - 1, np.arange(S))), shape=(N, S))
         sto = hstack([sto, -1.0 * sto])
 
         self.Minc = (hstack((wells, pipes, comps, users, sto))).toarray()
@@ -93,7 +98,8 @@ class Network:
         self.initial = np.concatenate((self.well['I'].values,
                                        f_ext,
                                        self.comp['fgc'].values,
-                                       [0] * len(self.node_demcost) * len(self.node_demcost.T),
+                                       [0] * len(self.node_demcost) *
+                                       len(self.node_demcost.T),
                                        [0] * len(self.sto.values),
                                        [0] * len(self.sto.values),
                                        self.node_info['p'].values))
@@ -102,7 +108,8 @@ class Network:
                                   [0] * len(self.pipe),
                                   self.pipe['Fg_min'].values,
                                   [0] * len(self.comp),
-                                  [0] * len(self.node_dem) * (len(self.node_dem.T) - 1),
+                                  [0] * len(self.node_dem) *
+                                  (len(self.node_dem.T) - 1),
                                   [0] * len(self.sto) * 2,
                                   self.node_info['Pmin'].values))
 
@@ -131,7 +138,7 @@ class Network:
         cost = np.concatenate((self.well['Cg'].values,
                                self.pipe['C_O'].values,
                                -1 * self.pipe['C_O'].values,
-                               self.comp['costc'].values,
+                                self.comp['costc'].values,
                                self.node_demcost['al_Res'].values,
                                self.node_demcost['al_Ind'].values,
                                self.node_demcost['al_Com'].values,
@@ -139,7 +146,8 @@ class Network:
                                self.node_demcost['al_Ref'].values,
                                self.node_demcost['al_Pet'].values,
                                (self.sto['C_S+'] - self.sto['C_V']).values,
-                               -1 * (self.sto['C_S-'] - self.sto['C_V']).values,
+                               -1 * (self.sto['C_S-'] -
+                                     self.sto['C_V']).values,
                                self.sto['C_V'].values))
 
         NV = (len(self.well) + 2 * len(self.pipe) + len(self.comp) +
@@ -162,7 +170,8 @@ class Network:
         B_lb = np.array([0] * 2 * len(self.pipe))
         B_ub = np.array([1] * 2 * len(self.pipe))
 
-        B = [self.m.Var(lb=lb, ub=ub, integer=True) for lb, ub in zip(B_lb, B_ub)]
+        B = [self.m.Var(lb=lb, ub=ub, integer=True)
+             for lb, ub in zip(B_lb, B_ub)]
         self.B = np.array(B)
 
         # for x, x0 in zip(self.X, self.initial):
@@ -188,7 +197,8 @@ class Network:
         pipe_indx2 = len(self.well) + len(self.pipe)
 
         # self.m.Equations([self.X[pipe_indx1+i] + self.X[pipe_indx2+i] <= j for i, j in enumerate(ftrans_max)])
-        self.m.Equations([self.net_flow(self.X)[i] <= j for i, j in enumerate(ftrans_max)])
+        self.m.Equations([self.net_flow(self.X)[i] <=
+                         j for i, j in enumerate(ftrans_max)])
 
         loads = self.node_dem['Total'].values
         self.A = self.X[:self.NV_obj] @ self.Minc.T
@@ -209,68 +219,23 @@ class Network:
             self.m.Equation(constrain >= g2)
 
     def net_flow(self, x):
-        flow = x[self.W:self.W + self.P] + x[self.W + self.P:self.W + 2 * self.P]
+        flow = x[self.W:self.W + self.P] + \
+            x[self.W + self.P:self.W + 2 * self.P]
         return flow
 
     def weymouth(self):
-        f = self.net_flow(self.X).reshape(-1, )
-        press = self.X[-self.N:]
-        Minc_P = self.Minc[:, self.W:self.W + self.P]
-        Minc_P_i = Minc_P.copy()
-        Minc_P_j = Minc_P.copy()
-        Minc_P_i[Minc_P_i > 0] = 0
-        Minc_P_i = -1 * Minc_P_i
-        Minc_P_j[Minc_P_j < 0] = 0
-        p_min = self.node_info['Pmin']
-        p_max = self.node_info['Pmax']
-        p_min_i = p_min @ (Minc_P_i)
-        p_max_j = p_max @ (Minc_P_j)
-        p_max_i = p_max @ (Minc_P_i)
-        p_min_j = p_min @ (Minc_P_j)
-        phi_plus_lowlimit = p_min @ np.abs(Minc_P)
-        phi_plus_uplimit = p_max @ np.abs(Minc_P)
-        phi_minus_lowlimit = p_min_i - p_max_j
-        phi_minus_uplimit = p_max_i - p_min_j
-
-        phi_plus = (press @ np.abs(Minc_P))
-        phi_minus = (press @ (-1 * Minc_P))
-
-        y = [self.m.Var(integer=True) for i in range(self.P)]
-        Phi = [self.m.Var() for i in range(self.P)]
-        M = [self.m.Var(lb=1) for i in range(self.P)]
-
-        Phi_lowlimit1 = (phi_plus_lowlimit * phi_minus) + \
-                        (phi_plus * phi_minus_lowlimit) - \
-                        (phi_plus_lowlimit * phi_minus_lowlimit)
-
-        Phi_lowlimit2 = (phi_plus_uplimit * phi_minus) + \
-                        (phi_minus * phi_minus_uplimit) - \
-                        (phi_plus_uplimit * phi_minus_uplimit)
-
-        Phi_uplimit1 = (phi_plus_uplimit * phi_minus) + \
-                       (phi_plus * phi_minus_lowlimit) - \
-                       (phi_plus_uplimit * phi_minus_lowlimit)
-
-        Phi_uplimit2 = (phi_plus_lowlimit * phi_minus) + \
-                       (phi_plus * phi_minus_uplimit) - \
-                       (phi_plus_lowlimit * phi_minus_uplimit)
+        f = (self.net_flow(self.X).reshape(-1,))
+        press = np.array(self.X[-self.N:])
+        press2 = np.array(self.X[-self.N:]) ** 2
 
         for i in range(self.P):
-            self.m.Equation(phi_plus[i] <= self.m.Param(value=phi_plus_uplimit[i]))
-            self.m.Equation(phi_plus[i] >= self.m.Param(value=phi_plus_lowlimit[i]))
-            self.m.Equation(phi_minus[i] <= self.m.Param(value=phi_minus_uplimit[i]))
-            self.m.Equation(phi_minus[i] >= self.m.Param(value=phi_minus_lowlimit[i]))
+            
+            i_index = (self.pipe['fnode'] - 1)[i]
+            j_index = (self.pipe['tnode'] - 1)[i]
+            p = press2[i_index] - press2[j_index]
+            K = self.Kij[i]
 
-            self.m.Equation(Phi[i] <= self.m.Param(value=Phi_uplimit1[i]))
-            self.m.Equation(Phi[i] <= self.m.Param(value=Phi_uplimit2[i]))
-            self.m.Equation(Phi[i] >= self.m.Param(value=Phi_lowlimit1[i]))
-            self.m.Equation(Phi[i] >= self.m.Param(value=Phi_lowlimit2[i]))
-
-            self.m.Equation(self.m.Param(value=f[i]) <= self.Kij[i] * Phi[i] + \
-                            M[i] ** 2 * (1 - y[i]))
-
-            self.m.Equation(self.m.Param(value=f[i]) <= -1 * self.Kij[i] * Phi[i] + \
-                            M[i] ** 2 * y[i])
+            self.m.Equation(self.m.sign2(f[i]) * f[i]**2 >= p*K)
 
     def solve_network(self):
         self.m.options.OTOL = 1e-7
@@ -294,7 +259,8 @@ class Network:
 
         f_plus = self.X[self.W: self.W + self.P]
         f_minus = self.X[self.W + self.P: self.W + self.P + self.P]
-        f_pipe = np.round([f_plus[i][0] + f_minus[i][0] for i in range(self.P)], 3)
+        f_pipe = np.round([f_plus[i][0] + f_minus[i][0]
+                          for i in range(self.P)], 3)
         f_comp_ = self.X[self.W + 2 * self.P:self.W + 2 * self.P + self.C]
         f_comp = np.round([i[0] for i in f_comp_], 3)
 
@@ -314,7 +280,8 @@ class Network:
         fmin = -fmax
         # G = nx.from_pandas_edgelist(graph, 'from', 'to', create_using=nx.Graph() )
         nodes = self.coordinates
-        pos = {nodes['id'][i]: [nodes['x'][i], nodes['y'][i]] for i in range(len(nodes))}
+        pos = {nodes['id'][i]: [nodes['x'][i], nodes['y'][i]]
+               for i in range(len(nodes))}
         G = nx.DiGraph()
         G.add_nodes_from(nodes_)
         G.add_edges_from(edges)
@@ -335,7 +302,8 @@ class Network:
         fig = plt.figure(figsize=(width, height), dpi=dpi)
         # nx.draw_networkx(G, )
         nx.draw(G, **options)
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=fmin, vmax=fmax))
+        sm = plt.cm.ScalarMappable(
+            cmap=cmap, norm=plt.Normalize(vmin=fmin, vmax=fmax))
         sm.set_array([])
         cbar = plt.colorbar(sm)
         plt.show()
