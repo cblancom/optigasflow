@@ -13,7 +13,7 @@ setup(
     author_email="<cristian.blanco@utp.edu.co>",
     description=DESCRIPTION,
     long_description_content_type="text/markdown",
-    packages=find_packages(),
+    packages=['network'],
     install_requires=['cycler', 'et-xmlfile', 'fonttools', 
                         'gekko', 'kiwisolver' ,'matplotlib', 
                         'networkx', 'numpy', 'openpyxl', 
