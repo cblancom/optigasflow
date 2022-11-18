@@ -7,6 +7,7 @@ setup(name="Network",
     author_email='cristian.blanco   utp.edu.co', 
     license="GPL",  
     url="https://github.com/cblancom/natural_gas_project",  
-    packages=find_packages('network'),
+    packages=find_packages(),
+    package_dir={'': 'network'},
     install_requires=[i.strip() for i in open("requirements.txt").readlines()],
 )
