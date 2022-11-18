@@ -1,8 +1,3 @@
-import matplotlib.pyplot as plt
-import networkx as nx
-import numpy as np
-import pandas as pd
-from gekko import GEKKO
-from scipy.sparse import coo_matrix, eye, hstack
-
-from network import Network
+__version__ = "0.1.0"
+__author__ = 'Stephen Hudson'
+__credits__ = 'Argonne National Laboratory'
