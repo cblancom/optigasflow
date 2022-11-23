@@ -1,5 +1,5 @@
 import pandas as pd
-from network import *
+from network.network import Network
 
 path_file = "/home/cristianblanco/projects/natural_gas_project/database/ng_case8.xlsx"
 data = pd.ExcelFile(path_file)
