@@ -7,7 +7,7 @@ DESCRIPTION = 'compute gas natural flow'
 
 # Setting up
 setup(
-    name="Network",
+    name="gnf",
     version=VERSION,
     author="cblancom",
     author_email="<cristian.blanco@utp.edu.co>",
