@@ -5,16 +5,13 @@ DESCRIPTION = 'compute gas natural flow'
 
 # Setting up
 setup(
-    name="gnf",
+    name="NGP",
     version=VERSION,
     author="cblancom",
     author_email="<cristian.blanco@utp.edu.co>",
     description=DESCRIPTION,
     long_description_content_type="text/markdown",
-    packages=['network'],
-    package_dir={
-        'network': 'network'
-    },
+    packages=find_packages(exclude=['test']),
     install_requires=['cycler', 
                       'et-xmlfile', 
                       'fonttools', 
