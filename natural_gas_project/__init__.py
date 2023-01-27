@@ -1,1 +1,1 @@
-from NGP.NGP import Natural_gas_MPCC
+from natural_gas_projects.NGP import Natural_gas_MPCC
