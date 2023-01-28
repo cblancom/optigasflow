@@ -50,6 +50,7 @@ class Natural_gas_MPCC:
         self.W = len(self.well)
         self.P = len(self.pipe)
         self.C = len(self.comp)
+        self.UNS = len(self.node_demcost) * len(self.node_demcost.T)
         self.S = len(self.sto)
         self.Kij = self.pipe['Kij'].values
         N = len(self.node_info)
@@ -306,7 +307,7 @@ class Natural_gas_MPCC:
         plt.show()
 
     def get_values(self):
-        N = self.W + self.P + self.C
+        N = self.W + self.P + self.C + self.UNS
         names = [0] * N
         values = [0] * N
 
@@ -330,6 +331,16 @@ class Natural_gas_MPCC:
             To = self.comp['tnode'][i]
             names[ind] = 'Flow compressor ' + str(From) + '-' + str(To)
             values[ind] = round(self.X[self.W + 2 * self.P + i].value[0], 3)
+        
+        
+       
+        k = 0
+        for i in range( len(self.node_demcost)):
+            for j in range(len(self.node_demcost.T)):
+                ind = self.W + self.P + self.C + k
+                names[ind] = 'Node' + str(i) + '-' + 'Load' + str(j)
+                values[ind] = self.X[ind].value[0]
+                k += 1
 
         names.insert(0, 'Objective')
         values.insert(0, self.m.options.objfcnval)
