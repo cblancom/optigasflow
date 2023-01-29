@@ -337,7 +337,7 @@ class Natural_gas_MPCC:
             for j in range(len(self.node_demcost.T)):
                 ind = self.W + self.P + self.C + k
                 names[ind] = 'Shortage in node ' + str(j+1) + '-' + 'Load ' + str(i+1)
-                values[ind] = round(self.X[ind + self.P + k].value[0], 3)
+                values[ind] = self.X[self.W + 2 * self.P + self.C+ k].value[0]
                 k += 1
 
         for i in range(self.N):
