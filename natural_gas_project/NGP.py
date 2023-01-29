@@ -341,7 +341,7 @@ class Natural_gas_MPCC:
                 k += 1
 
         for i in range(self.N):
-            ind = self.W + 2*self.P + self.C + self.UNS + i
+            ind = self.W + self.P + self.C + self.UNS + i
             names[ind] = 'Press in node  ' + str(i+1)
             values[ind] = self.X[-self.N+i].value[0]
 
