@@ -307,7 +307,7 @@ class Natural_gas_MPCC:
         plt.show()
 
     def get_values(self):
-        N = self.W + 2*self.P + self.C + self.UNS + self.N
+        N = self.W + self.P + self.C + self.UNS + self.N
         names = [0] * N
         values = [0] * N
 
@@ -326,7 +326,7 @@ class Natural_gas_MPCC:
             values[ind] = round(f_plus[i][0] + f_minus[i][0], 3)
 
         for i in range(self.C):
-            ind = self.W + 2*self.P + i
+            ind = self.W + self.P + i
             From = self.comp['fnode'][i]
             To = self.comp['tnode'][i]
             names[ind] = 'Flow compressor ' + str(From) + '-' + str(To)
@@ -337,7 +337,7 @@ class Natural_gas_MPCC:
             for j in range(len(self.node_demcost.T)):
                 ind = self.W + 2*self.P + self.C + k
                 names[ind] = 'Shortage in node ' + str(j+1) + '-' + 'Load ' + str(i+1)
-                values[ind] = self.X[ind].value[0]
+                values[ind] = round(self.X[ind].value[0], 3)
                 k += 1
 
         for i in range(self.N):
