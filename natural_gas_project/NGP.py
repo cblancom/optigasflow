@@ -323,14 +323,14 @@ class Natural_gas_MPCC:
             From = self.pipe['fnode'][i]
             To = self.pipe['tnode'][i]
             names[ind] = 'Net flow pipe ' + str(From) + '-' + str(To)
-            values[ind] = round(f_plus[i][0] + f_minus[i][0], 3)
+            values[ind] = f_plus[i][0] + f_minus[i][0]
 
         for i in range(self.C):
             ind = self.W + self.P + i
             From = self.comp['fnode'][i]
             To = self.comp['tnode'][i]
             names[ind] = 'Flow compressor ' + str(From) + '-' + str(To)
-            values[ind] = round(self.X[self.W + 2 * self.P + i].value[0], 3) 
+            values[ind] = self.X[self.W + 2 * self.P + i].value[0] 
        
         k = 0
         for i in range( len(self.node_demcost)):
