@@ -227,7 +227,6 @@ class Natural_gas_MPCC:
         press2 = np.array(self.X[-self.N:]) ** 2
 
         for i in range(self.P):
-            
             i_index = (self.pipe['fnode'] - 1)[i]
             j_index = (self.pipe['tnode'] - 1)[i]
             p = press2[i_index] - press2[j_index]
@@ -330,8 +329,7 @@ class Natural_gas_MPCC:
             From = self.comp['fnode'][i]
             To = self.comp['tnode'][i]
             names[ind] = 'Flow compressor ' + str(From) + '-' + str(To)
-            values[ind] = self.X[self.W + 2 * self.P + i].value[0] 
-       
+            values[ind] = self.X[self.W + 2 * self.P + i].value[0]
         k = 0
         for i in range( len(self.node_demcost.T)):
             for j in range(len(self.node_demcost)):
@@ -344,10 +342,6 @@ class Natural_gas_MPCC:
             ind = self.W + self.P + self.C + self.UNS + i
             names[ind] = 'Press in node  ' + str(i+1)
             values[ind] = self.X[-self.N+i].value[0]
-
-            
-
-
         names.insert(0, 'Objective')
         values.insert(0, self.m.options.objfcnval)
         return dict(zip(names, values))
