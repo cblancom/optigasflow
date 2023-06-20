@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 VERSION = '0.0.1'
-DESCRIPTION = 'compute gas natural flow'
+DESCRIPTION = 'Compute gas natural flow'
 
 # Setting up
 setup(
@@ -11,7 +11,8 @@ setup(
     author_email="<cristian.blanco@utp.edu.co>",
     description=DESCRIPTION,
     long_description_content_type="text/markdown",
-    packages=find_packages(exclude=['test']),
+    package_dir={"": "natural_gas_project/src"},
+    packages=find_packages(where="natural_gas_project/src"),
     install_requires=['cycler', 
                       'et-xmlfile', 
                       'fonttools', 
