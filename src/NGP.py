@@ -14,6 +14,7 @@ class InterconnectedEnergySystemOptimizer:
         self.T = T
         self.disp = disp 
         self.seed = seed
+        np.random.seed(self.seed)
         self.num_approximations = num_approximations
         self.weymouth_type = weymouth_type
         self.flag = False
@@ -63,9 +64,7 @@ class InterconnectedEnergySystemOptimizer:
         self.node_dem['Total'] = self.node_dem.sum(axis=1)
         self.node_user = self.node_dem[self.node_dem['Total'] != 0]
         self.loads_gas = self.node_dem['Total'].values
-        self.loads_gas = np.random.uniform(low=self.loads_gas.min(), 
-                                           high=self.loads_gas.max(), 
-                                           size=self.loads_gas.shape)
+        
         self.node_demcost = pd.read_excel(data, sheet_name='node.demcost')
 
         self.well = pd.read_excel(data, sheet_name='well')
@@ -598,14 +597,18 @@ df_gas = pd.ExcelFile(path_gas)
 
 savepath = '/home/usuario/Work/NGP/montecarlo_results/'
 
-types = ['MPCC', 'SOC', 'Taylor']
-
+# types = ['MPCC', 'SOC', 'Taylor']
+types = ['Taylor']
 samples = 100
 np.random.seed(42)
-seeds = np.random.randint(1, size=(samples))
+# seeds = np.random.randint(1, 3000,size=(samples))
+seeds = [1022, 2614, 1130, 1501, 703, 2450, 2778, 1580, 162, 202, 1982, 
+996, 2318, 816, 456, 1276, 1017, 2344, 2768, 338, 879, 1077, 792, 2265, 764,
+ 2236, 380, 493, 1181, 2063, 65, 2569, 1368, 1153]
 T = 1
-objects = []
+
 for typ in types:
+        objects = []
         savepath_folder = '/home/usuario/Work/NGP/montecarlo_results/' + typ
         for i in range(samples):
             p = InterconnectedEnergySystemOptimizer(data_gas=df_gas,
@@ -615,6 +618,6 @@ for typ in types:
                                                     seed=seeds[i])
             objects.append(p)
             # costs.append(p.costs())
-            file_ = open(savepath_folder+'/'+name+typ+'2.pkl', 'wb')
+            file_ = open(savepath_folder+'/'+name+typ+'32.pkl', 'wb')
             dill.dump(objects, file_)
             file_.close()

@@ -1,4 +1,5 @@
 cycler
+dill
 et-xmlfile
 fonttools
 gekko
